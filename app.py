@@ -21,7 +21,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 # =========================
-# MODELO
+# MODELOS
 # =========================
 class Participante(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -30,8 +30,17 @@ class Participante(db.Model):
     matricula = db.Column(db.String(50))
     asistencia = db.Column(db.String(10), nullable=False)
 
+class Config(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    titulo = db.Column(db.String(200), default="🏌️ Torneo Matungo")
+    subtitulo = db.Column(db.String(200), default="Anotate para la próxima fecha")
+
 with app.app_context():
     db.create_all()
+
+    if not Config.query.first():
+        db.session.add(Config())
+        db.session.commit()
 
 # =========================
 # VALIDACIONES
@@ -88,9 +97,12 @@ def index():
                 db.session.commit()
                 return redirect("/")
 
-    participantes = Participante.query.all()
+    participantes = Participante.query.order_by(Participante.id.desc()).all()
+
     van = [p for p in participantes if p.asistencia=="Si"]
     no_van = [p for p in participantes if p.asistencia=="No"]
+
+    config = Config.query.first()
 
     bg = "/static_bg" if os.path.exists("/var/data/uploads/fondo.jpg") else None
 
@@ -99,15 +111,17 @@ def index():
         no_van=no_van,
         error=error,
         admin=session.get("admin",False),
-        bg_path=bg
+        bg_path=bg,
+        config=config
     )
 
 # =========================
-# DATA (para tiempo real)
+# DATA TIEMPO REAL
 # =========================
 @app.route("/data")
 def data():
-    participantes = Participante.query.all()
+    participantes = Participante.query.order_by(Participante.id.desc()).all()
+
     return jsonify({
         "van":[
             {"id":p.id,"nombre":p.nombre,"apellido":p.apellido}
@@ -118,6 +132,21 @@ def data():
             for p in participantes if p.asistencia=="No"
         ]
     })
+
+# =========================
+# EDITAR TITULO
+# =========================
+@app.route("/update_config", methods=["POST"])
+def update_config():
+    if not session.get("admin"):
+        return "No autorizado",403
+
+    config = Config.query.first()
+    config.titulo = request.form.get("titulo")
+    config.subtitulo = request.form.get("subtitulo")
+
+    db.session.commit()
+    return redirect("/")
 
 # =========================
 # BORRAR
@@ -147,7 +176,7 @@ def reset():
     return redirect("/")
 
 # =========================
-# EXPORT EXCEL
+# EXPORT
 # =========================
 @app.route("/export")
 def export():
@@ -167,7 +196,7 @@ def export():
     return send_file(path, as_attachment=True)
 
 # =========================
-# SUBIR FONDO
+# FONDO
 # =========================
 @app.route("/upload_bg", methods=["POST"])
 def upload_bg():
