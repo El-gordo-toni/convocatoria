@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Torneo Matungo</title>
+</head>
+<body>
+
+    <h1>Inscripción - Torneo de Golf Matungo</h1>
+
+    <form method="POST">
+        <input type="text" name="nombre" placeholder="Nombre" required>
+        <input type="text" name="apellido" placeholder="Apellido" required>
+
+        <input type="text" name="matricula" placeholder="Número de matrícula (opcional)">
+
+        <select name="asistencia">
+            <option value="Si">Voy</option>
+            <option value="No">No voy</option>
+        </select>
+
+        <button type="submit">Enviar</button>
+    </form>
+
+    <h2>Lista de participantes</h2>
+
+    <ul>
+        {% for p in participantes %}
+            <li>
+                {{ p.nombre }} {{ p.apellido }} 
+                {% if p.matricula %}
+                    - Matrícula: {{ p.matricula }}
+                {% endif %}
+                - {{ p.asistencia }}
+            </li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>
