@@ -190,18 +190,5 @@ async function actualizar(){
 
 setInterval(actualizar, 5000);
 actualizar();
-<audio id="bg-music" loop>
-  <source src="musica.mp3" type="audio/mpeg">
-</audio>
-
-<script>
-  const music = document.getElementById("bg-music");
-  music.volume = 0.5;
-
-  // Se activa con la primera interacción del usuario
-  document.addEventListener("click", () => {
-    music.play().catch(() => {});
-  }, { once: true });
-</script>
 </body>
 </html>
