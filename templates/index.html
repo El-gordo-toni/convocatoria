@@ -16,17 +16,7 @@
             margin: 5px 0;
         }
 
-        h2 {
-            margin-top: 30px;
-        }
-
-        .van {
-            color: green;
-        }
-
-        .no-van {
-            color: red;
-        }
+        .error { color: red; font-weight: bold; }
 
         .card {
             border: 1px solid #ccc;
@@ -34,47 +24,72 @@
             margin: 5px 0;
             border-radius: 8px;
         }
+
+        .admin-panel {
+            background: #eee;
+            padding: 10px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
 
-    <h1>🏌️ Torneo Golf Matungo</h1>
+<h1>🏌️ Torneo Golf Matungo</h1>
 
-    <form method="POST">
-        <input type="text" name="nombre" placeholder="Nombre" required>
-        <input type="text" name="apellido" placeholder="Apellido" required>
-        <input type="text" name="matricula" placeholder="Matrícula (opcional)">
+{% if error %}
+<div class="error">{{ error }}</div>
+{% endif %}
 
-        <select name="asistencia">
-            <option value="Si">Voy</option>
-            <option value="No">No voy</option>
-        </select>
+<form method="POST">
+    <input type="text" name="nombre" placeholder="Nombre" required>
+    <input type="text" name="apellido" placeholder="Apellido" required>
+    <input type="text" name="matricula" placeholder="Matrícula (opcional)">
 
-        <button type="submit">Anotarme</button>
-    </form>
+    <select name="asistencia">
+        <option value="Si">Voy</option>
+        <option value="No">No voy</option>
+    </select>
 
-    <h2 class="van">🟢 Van ({{ van|length }})</h2>
-    {% for p in van %}
-        <div class="card">
-            {{ p.nombre }} {{ p.apellido }}
-            {% if p.matricula %}
-                - Matrícula: {{ p.matricula }}
-            {% endif %}
-        </div>
-    {% endfor %}
+    <button type="submit">Anotarme</button>
+</form>
 
-    <h2 class="no-van">🔴 No van ({{ no_van|length }})</h2>
-    {% for p in no_van %}
-        <div class="card">
-            {{ p.nombre }} {{ p.apellido }}
-            {% if p.matricula %}
-                - Matrícula: {{ p.matricula }}
-            {% endif %}
-        </div>
-    {% endfor %}
+<h2>🟢 Van ({{ van|length }})</h2>
+{% for p in van %}
+<div class="card">
+    {{ p.nombre }} {{ p.apellido }}
+    {% if p.matricula %} - {{ p.matricula }} {% endif %}
 
-    <br><br>
-    <a href="/reset">⚠️ Resetear lista</a>
+    {% if admin %}
+        <a href="/delete/{{ p.id }}">❌ Borrar</a>
+    {% endif %}
+</div>
+{% endfor %}
+
+<h2>🔴 No van ({{ no_van|length }})</h2>
+{% for p in no_van %}
+<div class="card">
+    {{ p.nombre }} {{ p.apellido }}
+    {% if p.matricula %} - {{ p.matricula }} {% endif %}
+
+    {% if admin %}
+        <a href="/delete/{{ p.id }}">❌ Borrar</a>
+    {% endif %}
+</div>
+{% endfor %}
+
+{% if admin %}
+<div class="admin-panel">
+    <h3>⚙️ Admin</h3>
+    <a href="/reset">Resetear lista</a><br>
+    <a href="/export">Exportar Excel</a><br>
+    <a href="/logout">Cerrar sesión</a>
+</div>
+{% else %}
+<form method="POST" action="/admin">
+    <input type="password" name="password" placeholder="Clave admin">
+    <button type="submit">Entrar como admin</button>
+</form>
+{% endif %}
 
 </body>
 </html>
