@@ -14,38 +14,57 @@ body {
 .overlay {background:rgba(0,0,0,0.7);min-height:100vh;padding:20px;}
 .container {display:flex;gap:20px;max-width:1100px;margin:auto;}
 .left,.right{flex:1}
-.card{background:white;color:black;padding:15px;border-radius:10px;margin:10px 0;}
-button{width:100%;padding:10px;border:none;border-radius:8px;background:#1f7a3f;color:white;font-weight:bold;}
-.btn-delete{background:red}
+.card{background:white;color:black;padding:15px;border-radius:10px;margin:10px 0;position:relative;}
+button{width:100%;padding:10px;border:none;border-radius:8px;background:#1f7a3f;color:white;font-weight:bold;cursor:pointer;}
+.btn-delete{
+    background:red;
+    width:auto;
+    padding:5px 10px;
+    position:absolute;
+    right:10px;
+    top:10px;
+}
 
 .form-card {padding:20px;}
 .input-group {margin-bottom:12px;display:flex;flex-direction:column;}
 .input-group label {font-size:13px;margin-bottom:4px;color:#555;}
 input,select {padding:12px;border-radius:8px;border:1px solid #ccc;}
-.btn-main {margin-top:10px;background:linear-gradient(135deg,#1f7a3f,#28a745);}
 
-#notif{
-position:fixed;bottom:20px;right:20px;
-background:#1f7a3f;padding:10px;border-radius:8px;
-display:none;
+.btn-main {
+    margin-top:10px;
+    background:linear-gradient(135deg,#1f7a3f,#28a745);
 }
 
-@media(max-width:768px){.container{flex-direction:column}}
+#notif{
+    position:fixed;
+    bottom:20px;
+    right:20px;
+    background:#1f7a3f;
+    padding:10px;
+    border-radius:8px;
+    display:none;
+}
+
+@media(max-width:768px){
+    .container{flex-direction:column;}
+}
 </style>
 </head>
 
 <body>
 <div class="overlay">
 
-<h1>🏌️Matungo Golf Tour 2026 </h1>
-<h1> Fecha 2 La Colina Golf Club</h1>
+<h1>🏌️ Torneo Matungo</h1>
 
 <div class="container">
 
+<!-- IZQUIERDA -->
 <div class="left">
 
 {% if error %}
-<div class="card" style="background:#ffdddd">{{ error }}</div>
+<div class="card" style="background:#ffdddd;color:red;">
+{{ error }}
+</div>
 {% endif %}
 
 <div class="card form-card">
@@ -85,31 +104,39 @@ display:none;
 
 {% if admin %}
 <div class="card">
+<h3>Admin</h3>
+
 <form method="POST" action="/upload_bg" enctype="multipart/form-data">
 <input type="file" name="imagen">
 <button>Subir fondo</button>
 </form>
-<a href="/reset">Reset</a><br>
-<a href="/export">Excel</a><br>
-<a href="/logout">Salir</a>
+
+<br>
+<a href="/reset">Resetear lista</a><br>
+<a href="/export">Exportar Excel</a><br>
+<a href="/logout">Cerrar sesión</a>
+
 </div>
 {% else %}
 <div class="card">
 <form method="POST" action="/admin">
-<input type="password" name="password">
-<button>Admin</button>
+<input type="password" name="password" placeholder="Clave admin">
+<button>Entrar</button>
 </form>
 </div>
 {% endif %}
 
 </div>
 
+<!-- DERECHA -->
 <div class="right">
-<h3>🟢 Convocados (<span id="cv"></span>)</h3>
+
+<h3>🟢 Van (<span id="cv"></span>)</h3>
 <div id="van"></div>
 
 <h3>🔴 No van (<span id="cn"></span>)</h3>
 <div id="novan"></div>
+
 </div>
 
 </div>
@@ -119,40 +146,70 @@ display:none;
 
 <audio id="sound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
+<!-- 🔑 FLAG ADMIN -->
 <script>
-let lastCount=0;
+const isAdmin = {{ 'true' if admin else 'false' }};
+</script>
 
-function playSound(){document.getElementById("sound").play();}
+<script>
+let lastCount = 0;
+
+function playSound(){
+    document.getElementById("sound").play();
+}
 
 function compartir(){
-let url=window.location.href;
-window.open("https://wa.me/?text="+encodeURIComponent("Sumate al torneo:\n"+url));
+    let url = window.location.href;
+    window.open("https://wa.me/?text=" + encodeURIComponent("Sumate al torneo:\n" + url));
 }
 
 async function actualizar(){
-let r=await fetch("/data");
-let d=await r.json();
+    try {
+        let r = await fetch("/data");
+        let d = await r.json();
 
-let v="",n="";
-d.van.forEach(p=>v+=`<div class="card">${p.nombre} ${p.apellido}</div>`);
-d.no_van.forEach(p=>n+=`<div class="card">${p.nombre} ${p.apellido}</div>`);
+        let v = "", n = "";
 
-document.getElementById("van").innerHTML=v;
-document.getElementById("novan").innerHTML=n;
-document.getElementById("cv").innerText=d.van.length;
-document.getElementById("cn").innerText=d.no_van.length;
+        d.van.forEach(p=>{
+            v += `<div class="card">
+                ${p.nombre} ${p.apellido}
+                ${isAdmin ? `<a href="/delete/${p.id}"><button class="btn-delete">❌</button></a>` : ""}
+            </div>`;
+        });
 
-let total=d.van.length+d.no_van.length;
-if(total>lastCount){
-let notif=document.getElementById("notif");
-notif.innerText="Nuevo jugador anotado 🏌️";
-notif.style.display="block";
-setTimeout(()=>notif.style.display="none",2000);
+        d.no_van.forEach(p=>{
+            n += `<div class="card">
+                ${p.nombre} ${p.apellido}
+                ${isAdmin ? `<a href="/delete/${p.id}"><button class="btn-delete">❌</button></a>` : ""}
+            </div>`;
+        });
+
+        document.getElementById("van").innerHTML = v;
+        document.getElementById("novan").innerHTML = n;
+
+        document.getElementById("cv").innerText = d.van.length;
+        document.getElementById("cn").innerText = d.no_van.length;
+
+        let total = d.van.length + d.no_van.length;
+
+        if(total > lastCount){
+            let notif = document.getElementById("notif");
+            notif.innerText = "Nuevo jugador anotado 🏌️";
+            notif.style.display = "block";
+
+            setTimeout(()=>{
+                notif.style.display = "none";
+            }, 2000);
+        }
+
+        lastCount = total;
+
+    } catch(e){
+        console.log("Error actualizando");
+    }
 }
-lastCount=total;
-}
 
-setInterval(actualizar,5000);
+setInterval(actualizar, 5000);
 actualizar();
 </script>
 
