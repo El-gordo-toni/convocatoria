@@ -2,38 +2,79 @@
 <html>
 <head>
     <title>Torneo Matungo</title>
+    <style>
+        body {
+            font-family: Arial;
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+        }
+
+        h2 {
+            margin-top: 30px;
+        }
+
+        .van {
+            color: green;
+        }
+
+        .no-van {
+            color: red;
+        }
+
+        .card {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 8px;
+        }
+    </style>
 </head>
 <body>
 
-    <h1>Inscripción - Torneo de Golf Matungo</h1>
+    <h1>🏌️ Torneo Golf Matungo</h1>
 
     <form method="POST">
         <input type="text" name="nombre" placeholder="Nombre" required>
         <input type="text" name="apellido" placeholder="Apellido" required>
-
-        <input type="text" name="matricula" placeholder="Número de matrícula (opcional)">
+        <input type="text" name="matricula" placeholder="Matrícula (opcional)">
 
         <select name="asistencia">
             <option value="Si">Voy</option>
             <option value="No">No voy</option>
         </select>
 
-        <button type="submit">Enviar</button>
+        <button type="submit">Anotarme</button>
     </form>
 
-    <h2>Lista de participantes</h2>
+    <h2 class="van">🟢 Van ({{ van|length }})</h2>
+    {% for p in van %}
+        <div class="card">
+            {{ p.nombre }} {{ p.apellido }}
+            {% if p.matricula %}
+                - Matrícula: {{ p.matricula }}
+            {% endif %}
+        </div>
+    {% endfor %}
 
-    <ul>
-        {% for p in participantes %}
-            <li>
-                {{ p.nombre }} {{ p.apellido }} 
-                {% if p.matricula %}
-                    - Matrícula: {{ p.matricula }}
-                {% endif %}
-                - {{ p.asistencia }}
-            </li>
-        {% endfor %}
-    </ul>
+    <h2 class="no-van">🔴 No van ({{ no_van|length }})</h2>
+    {% for p in no_van %}
+        <div class="card">
+            {{ p.nombre }} {{ p.apellido }}
+            {% if p.matricula %}
+                - Matrícula: {{ p.matricula }}
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <br><br>
+    <a href="/reset">⚠️ Resetear lista</a>
 
 </body>
 </html>
