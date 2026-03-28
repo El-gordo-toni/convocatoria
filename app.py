@@ -4,7 +4,7 @@ from flask_sqlalchemy import SQLAlchemy
 app = Flask(__name__)
 
 # Base de datos en disco persistente de Render
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////datos/datos.db"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////var/data/datos.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
