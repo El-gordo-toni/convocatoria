@@ -11,7 +11,7 @@ app = Flask(__name__)
 # CONFIG
 # =========================
 app.secret_key = "super_secret_key"
-ADMIN_PASSWORD = "admin"
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
 
 # Carpetas
 BASE_PATH = "/var/data"
