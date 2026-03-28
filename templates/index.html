@@ -4,53 +4,58 @@
     <title>Torneo Matungo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Fuente -->
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
-
     <style>
         body {
-            font-family: 'Poppins', sans-serif;
             margin: 0;
-            padding: 0;
+            font-family: Arial;
             color: white;
 
-            /* 🏌️ Fondo cancha golf */
+            /* 🖼️ CAMBIÁ ESTA URL POR TU IMAGEN */
             background: url("https://images.unsplash.com/photo-1599058917765-a780eda07a3e") no-repeat center center fixed;
             background-size: cover;
         }
 
         .overlay {
-            background: rgba(0,0,0,0.6);
+            background: rgba(0,0,0,0.7);
             min-height: 100vh;
             padding: 20px;
         }
 
         .container {
-            max-width: 600px;
+            display: flex;
+            gap: 20px;
+            max-width: 1100px;
             margin: auto;
+        }
+
+        /* 📋 PANEL IZQUIERDO (FORM) */
+        .left {
+            flex: 1;
+        }
+
+        /* 📊 PANEL DERECHO (LISTA) */
+        .right {
+            flex: 1;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         h1 {
             text-align: center;
-            animation: fadeIn 1s ease-in;
         }
 
         .card {
             background: rgba(255,255,255,0.9);
             color: black;
             padding: 15px;
-            border-radius: 12px;
+            border-radius: 10px;
             margin: 10px 0;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-
-            /* Animación */
-            animation: slideUp 0.4s ease;
         }
 
         input, select, button {
             width: 100%;
-            padding: 12px;
-            margin: 6px 0;
+            padding: 10px;
+            margin: 5px 0;
             border-radius: 8px;
             border: none;
         }
@@ -60,50 +65,24 @@
             color: white;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
         }
 
-        button:hover {
-            background: #145c2d;
+        .btn-delete {
+            background: crimson;
+            margin-top: 5px;
         }
 
-        .section-title {
-            margin-top: 25px;
-            font-size: 18px;
-            font-weight: bold;
-            animation: fadeIn 1s ease;
+        .section {
+            margin-top: 20px;
         }
 
         .van { color: #00ff88; }
         .no-van { color: #ff4d4d; }
 
-        .btn-delete {
-            background: crimson;
-            margin-top: 8px;
-        }
-
-        .admin-panel {
-            background: rgba(255,255,255,0.9);
-            color: black;
-            padding: 15px;
-            border-radius: 12px;
-            margin-top: 20px;
-        }
-
-        /* 🎬 Animaciones */
-        @keyframes fadeIn {
-            from { opacity: 0 }
-            to { opacity: 1 }
-        }
-
-        @keyframes slideUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
+        /* 📱 RESPONSIVE */
+        @media(max-width: 768px) {
+            .container {
+                flex-direction: column;
             }
         }
     </style>
@@ -112,84 +91,98 @@
 <body>
 
 <div class="overlay">
+
+<h1>🏌️ Torneo Golf Matungo</h1>
+
 <div class="container">
 
-    <h1>🏌️ Torneo Golf Matungo</h1>
+    <!-- IZQUIERDA -->
+    <div class="left">
 
-    {% if error %}
-        <div class="card" style="background:#ffdddd; color:red;">
+        {% if error %}
+        <div class="card" style="background:#ffdddd;color:red;">
             {{ error }}
         </div>
-    {% endif %}
-
-    <!-- FORM -->
-    <div class="card">
-        <form method="POST" onsubmit="playSound()">
-            <input type="text" name="nombre" placeholder="Nombre" required>
-            <input type="text" name="apellido" placeholder="Apellido" required>
-            <input type="text" name="matricula" placeholder="Matrícula (opcional)">
-
-            <select name="asistencia">
-                <option value="Si">Voy</option>
-                <option value="No">No voy</option>
-            </select>
-
-            <button type="submit">Anotarme</button>
-        </form>
-    </div>
-
-    <!-- VAN -->
-    <div class="section-title van">🟢 Van ({{ van|length }})</div>
-
-    {% for p in van %}
-    <div class="card">
-        <strong>{{ p.nombre }} {{ p.apellido }}</strong><br>
-        {% if p.matricula %}
-            <small>Matrícula: {{ p.matricula }}</small>
         {% endif %}
 
+        <!-- FORM -->
+        <div class="card">
+            <form method="POST" onsubmit="playSound()">
+                <input type="text" name="nombre" placeholder="Nombre" required>
+                <input type="text" name="apellido" placeholder="Apellido" required>
+                <input type="text" name="matricula" placeholder="Matrícula (opcional)">
+
+                <select name="asistencia">
+                    <option value="Si">Voy</option>
+                    <option value="No">No voy</option>
+                </select>
+
+                <button type="submit">Anotarme</button>
+            </form>
+        </div>
+
+        <!-- 📲 WHATSAPP -->
+        <div class="card">
+            <button onclick="compartirWhatsApp()">📲 Compartir por WhatsApp</button>
+        </div>
+
+        <!-- ADMIN -->
         {% if admin %}
-            <a href="/delete/{{ p.id }}">
-                <button class="btn-delete">❌ Borrar</button>
-            </a>
-        {% endif %}
-    </div>
-    {% endfor %}
-
-    <!-- NO VAN -->
-    <div class="section-title no-van">🔴 No van ({{ no_van|length }})</div>
-
-    {% for p in no_van %}
-    <div class="card">
-        <strong>{{ p.nombre }} {{ p.apellido }}</strong><br>
-        {% if p.matricula %}
-            <small>Matrícula: {{ p.matricula }}</small>
+        <div class="card">
+            <h3>⚙️ Admin</h3>
+            <a href="/reset">Resetear lista</a><br>
+            <a href="/export">Exportar Excel</a><br>
+            <a href="/logout">Cerrar sesión</a>
+        </div>
+        {% else %}
+        <div class="card">
+            <form method="POST" action="/admin">
+                <input type="password" name="password" placeholder="Clave admin">
+                <button type="submit">Entrar como admin</button>
+            </form>
+        </div>
         {% endif %}
 
-        {% if admin %}
-            <a href="/delete/{{ p.id }}">
-                <button class="btn-delete">❌ Borrar</button>
-            </a>
-        {% endif %}
     </div>
-    {% endfor %}
 
-    <!-- ADMIN -->
-    {% if admin %}
-    <div class="admin-panel">
-        <h3>⚙️ Panel Admin</h3>
-        <a href="/reset">Resetear lista</a><br>
-        <a href="/export">Exportar Excel</a><br>
-        <a href="/logout">Cerrar sesión</a>
+    <!-- DERECHA (LISTA) -->
+    <div class="right">
+
+        <div class="section van">
+            <h3>🟢 Van ({{ van|length }})</h3>
+        </div>
+
+        {% for p in van %}
+        <div class="card">
+            {{ p.nombre }} {{ p.apellido }}
+            {% if p.matricula %} - {{ p.matricula }} {% endif %}
+
+            {% if admin %}
+                <a href="/delete/{{ p.id }}">
+                    <button class="btn-delete">❌</button>
+                </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+        <div class="section no-van">
+            <h3>🔴 No van ({{ no_van|length }})</h3>
+        </div>
+
+        {% for p in no_van %}
+        <div class="card">
+            {{ p.nombre }} {{ p.apellido }}
+            {% if p.matricula %} - {{ p.matricula }} {% endif %}
+
+            {% if admin %}
+                <a href="/delete/{{ p.id }}">
+                    <button class="btn-delete">❌</button>
+                </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+
     </div>
-    {% else %}
-    <div class="card">
-        <form method="POST" action="/admin">
-            <input type="password" name="password" placeholder="Clave admin">
-            <button type="submit">Entrar como admin</button>
-        </form>
-    </div>
-    {% endif %}
 
 </div>
 </div>
@@ -200,6 +193,23 @@
 <script>
 function playSound() {
     document.getElementById("sound").play();
+}
+
+function compartirWhatsApp() {
+    let texto = "🏌️ Torneo Matungo\n\n";
+
+    texto += "🟢 Van:\n";
+    {% for p in van %}
+    texto += "- {{ p.nombre }} {{ p.apellido }}\n";
+    {% endfor %}
+
+    texto += "\n🔴 No van:\n";
+    {% for p in no_van %}
+    texto += "- {{ p.nombre }} {{ p.apellido }}\n";
+    {% endfor %}
+
+    let url = "https://wa.me/?text=" + encodeURIComponent(texto);
+    window.open(url, "_blank");
 }
 </script>
 
