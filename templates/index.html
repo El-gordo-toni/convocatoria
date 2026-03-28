@@ -1,215 +1,164 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Torneo Matungo</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Torneo Matungo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial;
-            color: white;
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    color: white;
+    background: url("{{ bg_path if bg_path else 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e' }}") no-repeat center center fixed;
+    background-size: cover;
+}
 
-            /* 🖼️ CAMBIÁ ESTA URL POR TU IMAGEN */
-            background: url("https://images.unsplash.com/photo-1599058917765-a780eda07a3e") no-repeat center center fixed;
-            background-size: cover;
-        }
+.overlay {
+    background: rgba(0,0,0,0.7);
+    min-height: 100vh;
+    padding: 20px;
+}
 
-        .overlay {
-            background: rgba(0,0,0,0.7);
-            min-height: 100vh;
-            padding: 20px;
-        }
+.container {
+    display: flex;
+    gap: 20px;
+    max-width: 1100px;
+    margin: auto;
+}
 
-        .container {
-            display: flex;
-            gap: 20px;
-            max-width: 1100px;
-            margin: auto;
-        }
+.left, .right {
+    flex: 1;
+}
 
-        /* 📋 PANEL IZQUIERDO (FORM) */
-        .left {
-            flex: 1;
-        }
+.right {
+    max-height: 90vh;
+    overflow-y: auto;
+}
 
-        /* 📊 PANEL DERECHO (LISTA) */
-        .right {
-            flex: 1;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
+.card {
+    background: rgba(255,255,255,0.9);
+    color: black;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+}
 
-        h1 {
-            text-align: center;
-        }
+input, select, button {
+    width: 100%;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 8px;
+    border: none;
+}
 
-        .card {
-            background: rgba(255,255,255,0.9);
-            color: black;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 10px 0;
-        }
+button {
+    background: #1f7a3f;
+    color: white;
+    font-weight: bold;
+}
 
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border-radius: 8px;
-            border: none;
-        }
+.btn-delete {
+    background: crimson;
+}
 
-        button {
-            background: #1f7a3f;
-            color: white;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .btn-delete {
-            background: crimson;
-            margin-top: 5px;
-        }
-
-        .section {
-            margin-top: 20px;
-        }
-
-        .van { color: #00ff88; }
-        .no-van { color: #ff4d4d; }
-
-        /* 📱 RESPONSIVE */
-        @media(max-width: 768px) {
-            .container {
-                flex-direction: column;
-            }
-        }
-    </style>
+@media(max-width: 768px){
+    .container { flex-direction: column; }
+}
+</style>
 </head>
 
 <body>
-
 <div class="overlay">
 
-<h1>🏌️ Torneo Golf Matungo</h1>
+<h1>🏌️ Torneo Matungo</h1>
 
 <div class="container">
 
-    <!-- IZQUIERDA -->
-    <div class="left">
+<!-- FORM -->
+<div class="left">
 
-        {% if error %}
-        <div class="card" style="background:#ffdddd;color:red;">
-            {{ error }}
-        </div>
-        {% endif %}
+{% if error %}
+<div class="card" style="background:#ffdddd;color:red;">
+{{ error }}
+</div>
+{% endif %}
 
-        <!-- FORM -->
-        <div class="card">
-            <form method="POST" onsubmit="playSound()">
-                <input type="text" name="nombre" placeholder="Nombre" required>
-                <input type="text" name="apellido" placeholder="Apellido" required>
-                <input type="text" name="matricula" placeholder="Matrícula (opcional)">
+<div class="card">
+<form method="POST" onsubmit="playSound()">
+<input name="nombre" placeholder="Nombre" required>
+<input name="apellido" placeholder="Apellido" required>
+<input name="matricula" placeholder="Matrícula">
+<select name="asistencia">
+<option value="Si">Voy</option>
+<option value="No">No voy</option>
+</select>
+<button>ANOTARME</button>
+</form>
+</div>
 
-                <select name="asistencia">
-                    <option value="Si">Voy</option>
-                    <option value="No">No voy</option>
-                </select>
+<div class="card">
+<button onclick="compartirWhatsApp()">📲 Compartir</button>
+</div>
 
-                <button type="submit">Anotarme</button>
-            </form>
-        </div>
+{% if admin %}
+<div class="card">
+<h3>Admin</h3>
 
-        <!-- 📲 WHATSAPP -->
-        <div class="card">
-            <button onclick="compartirWhatsApp()">📲 Compartir por WhatsApp</button>
-        </div>
+<form method="POST" action="/upload_bg" enctype="multipart/form-data">
+<input type="file" name="imagen" required>
+<button>Subir fondo</button>
+</form>
 
-        <!-- ADMIN -->
-        {% if admin %}
-        <div class="card">
-            <h3>⚙️ Admin</h3>
-            <a href="/reset">Resetear lista</a><br>
-            <a href="/export">Exportar Excel</a><br>
-            <a href="/logout">Cerrar sesión</a>
-        </div>
-        {% else %}
-        <div class="card">
-            <form method="POST" action="/admin">
-                <input type="password" name="password" placeholder="Clave admin">
-                <button type="submit">Entrar como admin</button>
-            </form>
-        </div>
-        {% endif %}
+<a href="/reset">Resetear</a><br>
+<a href="/export">Exportar</a><br>
+<a href="/logout">Salir</a>
+</div>
+{% else %}
+<div class="card">
+<form method="POST" action="/admin">
+<input type="password" name="password" placeholder="Clave admin">
+<button>Entrar</button>
+</form>
+</div>
+{% endif %}
 
-    </div>
+</div>
 
-    <!-- DERECHA (LISTA) -->
-    <div class="right">
+<!-- LISTA -->
+<div class="right">
 
-        <div class="section van">
-            <h3>🟢 Van ({{ van|length }})</h3>
-        </div>
+<h3>🟢 Van ({{ van|length }})</h3>
+{% for p in van %}
+<div class="card">
+{{ p.nombre }} {{ p.apellido }}
+{% if admin %}<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>{% endif %}
+</div>
+{% endfor %}
 
-        {% for p in van %}
-        <div class="card">
-            {{ p.nombre }} {{ p.apellido }}
-            {% if p.matricula %} - {{ p.matricula }} {% endif %}
+<h3>🔴 No van ({{ no_van|length }})</h3>
+{% for p in no_van %}
+<div class="card">
+{{ p.nombre }} {{ p.apellido }}
+{% if admin %}<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>{% endif %}
+</div>
+{% endfor %}
 
-            {% if admin %}
-                <a href="/delete/{{ p.id }}">
-                    <button class="btn-delete">❌</button>
-                </a>
-            {% endif %}
-        </div>
-        {% endfor %}
-
-        <div class="section no-van">
-            <h3>🔴 No van ({{ no_van|length }})</h3>
-        </div>
-
-        {% for p in no_van %}
-        <div class="card">
-            {{ p.nombre }} {{ p.apellido }}
-            {% if p.matricula %} - {{ p.matricula }} {% endif %}
-
-            {% if admin %}
-                <a href="/delete/{{ p.id }}">
-                    <button class="btn-delete">❌</button>
-                </a>
-            {% endif %}
-        </div>
-        {% endfor %}
-
-    </div>
+</div>
 
 </div>
 </div>
 
-<!-- 🔊 SONIDO -->
 <audio id="sound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
 <script>
-function playSound() {
+function playSound(){
     document.getElementById("sound").play();
 }
 
-function compartirWhatsApp() {
-    let texto = "🏌️ Torneo Matungo\n\n";
-
-    texto += "🟢 Van:\n";
-    {% for p in van %}
-    texto += "- {{ p.nombre }} {{ p.apellido }}\n";
-    {% endfor %}
-
-    texto += "\n🔴 No van:\n";
-    {% for p in no_van %}
-    texto += "- {{ p.nombre }} {{ p.apellido }}\n";
-    {% endfor %}
-
-    let url = "https://wa.me/?text=" + encodeURIComponent(texto);
-    window.open(url, "_blank");
+function compartirWhatsApp(){
+    let url = window.location.href;
+    let texto = "🏌️ Sumate al torneo:\n" + url;
+    window.open("https://wa.me/?text=" + encodeURIComponent(texto));
 }
 </script>
 
