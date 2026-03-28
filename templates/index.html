@@ -139,6 +139,11 @@ button {
 </form>
 </div>
 
+<!-- 🔥 BOTÓN WHATSAPP ACÁ -->
+<div class="card">
+    <button onclick="compartir()">📲 Compartir por WhatsApp</button>
+</div>
+
 <!-- ADMIN -->
 {% if admin %}
 <div class="card admin-card">
@@ -225,9 +230,17 @@ button {
 
 </div>
 </div>
-<div class="card">
-    <button onclick="compartir()">📲 Compartir por WhatsApp</button>
-</div>
+
+</div> <!-- cierre overlay o container -->
+
+<script>
+function compartir(){
+    let url = window.location.href;
+    let texto = "🏌️ Sumate al Torneo Matungo!\n\nAnotate acá:\n" + url;
+    let link = "https://wa.me/?text=" + encodeURIComponent(texto);
+    window.open(link, "_blank");
+}
+</script>
 
 </body>
 </html>
