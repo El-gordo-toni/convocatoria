@@ -1,88 +1,42 @@
+
 <!DOCTYPE html>
 <html>
 <head>
-<title>Torneo Matungo</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Matungo</title>
 
 <style>
 body {
-    margin: 0;
-    font-family: Arial;
-    color: white;
-    background: url("{{ bg_path if bg_path else 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e' }}") no-repeat center center fixed;
-    background-size: cover;
+    margin:0;
+    font-family:Arial;
+    color:white;
+    background:url("{{ bg_path if bg_path else 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e' }}") center/cover fixed;
 }
-
-.overlay {
-    background: rgba(0,0,0,0.7);
-    min-height: 100vh;
-    padding: 20px;
+.overlay {background:rgba(0,0,0,0.7);min-height:100vh;padding:20px;}
+.container {display:flex;gap:20px;max-width:1100px;margin:auto;}
+.left,.right{flex:1}
+.card{background:white;color:black;padding:12px;border-radius:8px;margin:8px 0;}
+button{width:100%;padding:10px;border:none;border-radius:8px;background:#1f7a3f;color:white;}
+.btn-delete{background:red}
+#notif{
+    position:fixed;bottom:20px;right:20px;
+    background:#1f7a3f;padding:10px;border-radius:8px;
+    display:none;
 }
-
-.container {
-    display: flex;
-    gap: 20px;
-    max-width: 1100px;
-    margin: auto;
-}
-
-.left, .right {
-    flex: 1;
-}
-
-.right {
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.card {
-    background: rgba(255,255,255,0.9);
-    color: black;
-    padding: 15px;
-    border-radius: 10px;
-    margin: 10px 0;
-}
-
-input, select, button {
-    width: 100%;
-    padding: 10px;
-    margin: 5px 0;
-    border-radius: 8px;
-    border: none;
-}
-
-button {
-    background: #1f7a3f;
-    color: white;
-    font-weight: bold;
-}
-
-.btn-delete {
-    background: crimson;
-}
-
-@media(max-width: 768px){
-    .container { flex-direction: column; }
-}
+@media(max-width:768px){.container{flex-direction:column}}
 </style>
 </head>
 
 <body>
 <div class="overlay">
 
-<h1>🏌️ Matungo Golf Tour 2026</h1>
-<h1> Fecha 2 La Colina Golf </h1>
+<h1>🏌️Matungo Golf Tour 2026</h1>
+<h1> Fecha 2 La Colina Golf Club</h1>
 
 <div class="container">
 
-<!-- FORM -->
 <div class="left">
-
-{% if error %}
-<div class="card" style="background:#ffdddd;color:red;">
-{{ error }}
-</div>
-{% endif %}
+{% if error %}<div class="card" style="background:#ffdddd">{{ error }}</div>{% endif %}
 
 <div class="card">
 <form method="POST" onsubmit="playSound()">
@@ -93,74 +47,84 @@ button {
 <option value="Si">Voy</option>
 <option value="No">No voy</option>
 </select>
-<button>ANOTARME</button>
+<button>Anotarme</button>
 </form>
 </div>
 
 <div class="card">
-<button onclick="compartirWhatsApp()">📲 Compartir</button>
+<button onclick="compartir()">📲 Compartir</button>
 </div>
 
 {% if admin %}
 <div class="card">
-<h3>Admin</h3>
-
 <form method="POST" action="/upload_bg" enctype="multipart/form-data">
-<input type="file" name="imagen" required>
-<button>Subir fondo</button>
+<input type="file" name="imagen">
+<button>Fondo</button>
 </form>
-
-<a href="/reset">Resetear</a><br>
-<a href="/export">Exportar</a><br>
+<a href="/reset">Reset</a><br>
+<a href="/export">Excel</a><br>
 <a href="/logout">Salir</a>
 </div>
 {% else %}
 <div class="card">
 <form method="POST" action="/admin">
-<input type="password" name="password" placeholder="Clave admin">
-<button>Entrar</button>
+<input type="password" name="password">
+<button>Admin</button>
 </form>
 </div>
 {% endif %}
-
 </div>
 
-<!-- LISTA -->
 <div class="right">
+<h3>🟢 Van (<span id="cv"></span>)</h3>
+<div id="van"></div>
 
-<h3>🟢 Convocados ({{ van|length }})</h3>
-{% for p in van %}
-<div class="card">
-{{ p.nombre }} {{ p.apellido }}
-{% if admin %}<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>{% endif %}
-</div>
-{% endfor %}
-
-<h3>🔴 No van ({{ no_van|length }})</h3>
-{% for p in no_van %}
-<div class="card">
-{{ p.nombre }} {{ p.apellido }}
-{% if admin %}<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>{% endif %}
-</div>
-{% endfor %}
-
+<h3>🔴 No van (<span id="cn"></span>)</h3>
+<div id="novan"></div>
 </div>
 
 </div>
 </div>
+
+<div id="notif"></div>
 
 <audio id="sound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
 <script>
-function playSound(){
-    document.getElementById("sound").play();
+let lastCount = 0;
+
+function playSound(){document.getElementById("sound").play();}
+
+function compartir(){
+    let url = window.location.href;
+    window.open("https://wa.me/?text="+encodeURIComponent("Sumate al torneo:\n"+url));
 }
 
-function compartirWhatsApp(){
-    let url = window.location.href;
-    let texto = "🏌️ Sumate al torneo:\n" + url;
-    window.open("https://wa.me/?text=" + encodeURIComponent(texto));
+async function actualizar(){
+    let r = await fetch("/data");
+    let d = await r.json();
+
+    let v="",n="";
+    d.van.forEach(p=>v+=`<div class="card">${p.nombre} ${p.apellido}</div>`);
+    d.no_van.forEach(p=>n+=`<div class="card">${p.nombre} ${p.apellido}</div>`);
+
+    document.getElementById("van").innerHTML=v;
+    document.getElementById("novan").innerHTML=n;
+    document.getElementById("cv").innerText=d.van.length;
+    document.getElementById("cn").innerText=d.no_van.length;
+
+    let total = d.van.length + d.no_van.length;
+    if(total > lastCount){
+        let notif = document.getElementById("notif");
+        notif.innerText = "Nuevo jugador anotado 🏌️";
+        notif.style.display="block";
+        setTimeout(()=>notif.style.display="none",2000);
+    }
+    lastCount = total;
 }
+
+setInterval(actualizar,5000);
+actualizar();
 </script>
 
 </body>
