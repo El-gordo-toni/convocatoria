@@ -4,6 +4,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
+<script>
+function compartir(){
+    let url = window.location.href;
+
+    let texto = "🏌️ Sumate al Torneo Matungo!\n\nAnotate acá:\n" + url;
+
+    let link = "https://wa.me/?text=" + encodeURIComponent(texto);
+
+    window.open(link, "_blank");
+}
+</script>
 body {
     margin:0;
     font-family:Arial;
