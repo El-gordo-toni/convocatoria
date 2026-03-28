@@ -92,10 +92,27 @@ def index():
 
 @app.route("/data")
 def data():
+@app.route("/data")
+def data():
     participantes = Participante.query.all()
+
     return jsonify({
-        "van":[{"nombre":p.nombre,"apellido":p.apellido} for p in participantes if p.asistencia=="Si"],
-        "no_van":[{"nombre":p.nombre,"apellido":p.apellido} for p in participantes if p.asistencia=="No"]
+        "van":[
+            {
+                "id": p.id,
+                "nombre": p.nombre,
+                "apellido": p.apellido
+            }
+            for p in participantes if p.asistencia=="Si"
+        ],
+        "no_van":[
+            {
+                "id": p.id,
+                "nombre": p.nombre,
+                "apellido": p.apellido
+            }
+            for p in participantes if p.asistencia=="No"
+        ]
     })
 
 @app.route("/delete/<int:id>")
