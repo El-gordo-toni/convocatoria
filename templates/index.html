@@ -191,18 +191,73 @@ async function actualizar(){
 setInterval(actualizar, 5000);
 actualizar();
 </script>
-<button onclick="playMusic()">🔊 Activar música</button>
+<button id="music-btn" onclick="toggleMusic()" style="
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  border: none;
+  border-radius: 10px;
+  background: #111;
+  color: white;
+  cursor: pointer;
+  z-index: 999;
+">
+  🔊 Música ON
+</button>
 
 <audio id="bg-music" loop>
-  <source src="Matungo Golf Todo el Año.mp3" type="audio/mpeg">
+  <source src="musica.mp3" type="audio/mpeg">
 </audio>
 
 <script>
-  function playMusic() {
-    const music = document.getElementById("bg-music");
-    music.volume = 0.2;
-    music.play();
+  const music = document.getElementById("bg-music");
+  const btn = document.getElementById("music-btn");
+
+  // Volumen bajo
+  music.volume = 0.2;
+
+  // Estado guardado
+  let musicEnabled = localStorage.getItem("musicEnabled");
+
+  if (musicEnabled === null) {
+    // Primera vez: activado por default
+    musicEnabled = true;
+    localStorage.setItem("musicEnabled", "true");
+  } else {
+    musicEnabled = musicEnabled === "true";
   }
+
+  function updateButton() {
+    btn.textContent = musicEnabled ? "🔊 Música ON" : "🔇 Música OFF";
+  }
+
+  function toggleMusic() {
+    musicEnabled = !musicEnabled;
+    localStorage.setItem("musicEnabled", musicEnabled);
+
+    if (musicEnabled) {
+      music.play();
+    } else {
+      music.pause();
+    }
+
+    updateButton();
+  }
+
+  // Intentar reproducir automáticamente
+  if (musicEnabled) {
+    const playPromise = music.play();
+
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Si el navegador bloquea autoplay, espera interacción
+        console.log("Autoplay bloqueado");
+      });
+    }
+  }
+
+  updateButton();
 </script>
 </body>
 </html>
