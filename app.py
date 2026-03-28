@@ -1,9 +1,14 @@
-from flask import Flask, render_template, request, redirect
+from flask import Flask, render_template, request, redirect, Response
 from flask_sqlalchemy import SQLAlchemy
+import os
 
 app = Flask(__name__)
 
-# Base de datos en disco persistente de Render
+# Asegurar carpeta persistente (Render usa /var/data)
+if not os.path.exists("/var/data"):
+    os.makedirs("/var/data")
+
+# Config DB
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:////var/data/datos.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -17,13 +22,17 @@ class Participante(db.Model):
     matricula = db.Column(db.String(50), nullable=True)
     asistencia = db.Column(db.String(10), nullable=False)  # "Si" o "No"
 
-# Crear base si no existe
+# Crear DB si no existe
 with app.app_context():
     db.create_all()
 
 # Ruta principal
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods=["GET", "POST", "HEAD"])
 def index():
+    # Para evitar error de Render con HEAD
+    if request.method == "HEAD":
+        return Response(status=200)
+
     if request.method == "POST":
         nombre = request.form["nombre"]
         apellido = request.form["apellido"]
@@ -50,12 +59,13 @@ def index():
 
     return render_template("index.html", van=van, no_van=no_van)
 
-# Reset (opcional admin)
+# Reset lista (opcional)
 @app.route("/reset")
 def reset():
     Participante.query.delete()
     db.session.commit()
     return redirect("/")
 
+# Run local
 if __name__ == "__main__":
     app.run(debug=True)
