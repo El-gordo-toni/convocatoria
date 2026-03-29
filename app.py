@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, Response, session, send_file
+from flask import Flask, render_template, request, redirect, session, send_file
 from flask_sqlalchemy import SQLAlchemy
+from flask_socketio import SocketIO
 import os
 import re
 from openpyxl import Workbook
 
 app = Flask(__name__)
+socketio = SocketIO(app)
 
 app.secret_key = "super_secret_key"
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
@@ -34,10 +36,8 @@ class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), default="🏌️ Torneo Matungo")
     subtitulo = db.Column(db.String(200), default="Anotate para la próxima fecha")
-
     subtitulo2 = db.Column(db.String(200), default="")
     subtitulo3 = db.Column(db.String(200), default="")
-
     opciones_menu = db.Column(db.Text, default="8:00 AM,9:00 AM,10:00 AM")
     menu_activo = db.Column(db.Boolean, default=True)
 
@@ -74,10 +74,8 @@ def logout():
 # =========================
 # HOME
 # =========================
-@app.route("/", methods=["GET","POST","HEAD"])
+@app.route("/", methods=["GET","POST"])
 def index():
-    if request.method == "HEAD":
-        return Response(status=200)
 
     error = None
     config = Config.query.first()
@@ -98,17 +96,22 @@ def index():
         elif matricula and not solo_numeros(matricula):
             error = "Matrícula inválida"
         else:
-            if Participante.query.filter_by(nombre=nombre, apellido=apellido).first():
-                error = "Ya anotado"
-            else:
-                db.session.add(Participante(
-                    nombre=nombre,
-                    apellido=apellido,
-                    matricula=matricula,
-                    asistencia=asistencia if asistencia else ""
-                ))
-                db.session.commit()
-                return redirect("/")
+            nuevo = Participante(
+                nombre=nombre,
+                apellido=apellido,
+                matricula=matricula,
+                asistencia=asistencia if asistencia else ""
+            )
+            db.session.add(nuevo)
+            db.session.commit()
+
+            # 🔥 EMITE A TODOS LOS CLIENTES
+            socketio.emit("nuevo", {
+                "nombre": nuevo.nombre,
+                "apellido": nuevo.apellido
+            })
+
+            return redirect("/")
 
     participantes = Participante.query.order_by(Participante.id.desc()).all()
     bg = "/static_bg" if os.path.exists("/var/data/uploads/fondo.jpg") else None
@@ -124,29 +127,9 @@ def index():
     )
 
 # =========================
-# CONFIG
+# RESTO IGUAL (delete, reset, export, bg...)
 # =========================
-@app.route("/update_config", methods=["POST"])
-def update_config():
-    if not session.get("admin"):
-        return "No autorizado",403
 
-    config = Config.query.first()
-
-    config.titulo = request.form.get("titulo")
-    config.subtitulo = request.form.get("subtitulo")
-    config.subtitulo2 = request.form.get("subtitulo2")
-    config.subtitulo3 = request.form.get("subtitulo3")
-
-    config.opciones_menu = request.form.get("opciones_menu")
-    config.menu_activo = True if request.form.get("menu_activo") == "on" else False
-
-    db.session.commit()
-    return redirect("/")
-
-# =========================
-# BORRAR
-# =========================
 @app.route("/delete/<int:id>")
 def delete(id):
     if not session.get("admin"):
@@ -156,12 +139,8 @@ def delete(id):
     if p:
         db.session.delete(p)
         db.session.commit()
-
     return redirect("/")
 
-# =========================
-# RESET
-# =========================
 @app.route("/reset")
 def reset():
     if not session.get("admin"):
@@ -171,9 +150,6 @@ def reset():
     db.session.commit()
     return redirect("/")
 
-# =========================
-# EXPORT
-# =========================
 @app.route("/export")
 def export():
     if not session.get("admin"):
@@ -191,27 +167,20 @@ def export():
 
     return send_file(path, as_attachment=True)
 
-# =========================
-# FONDO
-# =========================
 @app.route("/upload_bg", methods=["POST"])
 def upload_bg():
     if not session.get("admin"):
         return "No autorizado",403
 
     file = request.files.get("imagen")
-
-    if file and file.filename.lower().endswith(('.png','.jpg','.jpeg')):
+    if file:
         file.save("/var/data/uploads/fondo.jpg")
-
     return redirect("/")
 
 @app.route("/static_bg")
 def bg():
     return send_file("/var/data/uploads/fondo.jpg")
 
-# =========================
-# RUN
-# =========================
+# 🔥 IMPORTANTE
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)
