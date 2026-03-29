@@ -90,11 +90,18 @@ button {
 <input name="apellido" placeholder="Apellido" required>
 <input name="matricula" placeholder="Matrícula (opcional)">
 
+<div class="input-group">
+<label style="font-weight:bold;">📋 Menú</label>
+
 <select name="asistencia">
+<option value="" disabled selected>Seleccionar opción</option>
+
 {% for op in menu_opciones %}
 <option value="{{ op }}">{{ op }}</option>
 {% endfor %}
+
 </select>
+</div>
 
 <button>Anotarme</button>
 </form>
