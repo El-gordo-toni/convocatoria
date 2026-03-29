@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, Response, session, send_file, jsonify
+from flask import Flask, render_template, request, redirect, Response, session, send_file
 from flask_sqlalchemy import SQLAlchemy
 import os
 import re
@@ -57,6 +57,10 @@ def admin_login():
         session["admin"] = True
     return redirect("/")
 
+@app.route("/admin-secret")
+def admin_secret():
+    return render_template("admin_login.html")
+
 @app.route("/logout")
 def logout():
     session.pop("admin", None)
@@ -80,7 +84,6 @@ def index():
         matricula = request.form.get("matricula","").strip()
         asistencia = request.form.get("asistencia")
 
-        # 🔥 VALIDACIÓN CLAVE
         if not asistencia:
             error = "Seleccioná una opción del menú"
         elif not solo_letras(nombre):
