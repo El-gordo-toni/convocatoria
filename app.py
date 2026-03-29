@@ -34,7 +34,12 @@ class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), default="🏌️ Torneo Matungo")
     subtitulo = db.Column(db.String(200), default="Anotate para la próxima fecha")
+
+    subtitulo2 = db.Column(db.String(200), default="")
+    subtitulo3 = db.Column(db.String(200), default="")
+
     opciones_menu = db.Column(db.Text, default="8:00 AM,9:00 AM,10:00 AM")
+    menu_activo = db.Column(db.Boolean, default=True)
 
 with app.app_context():
     db.create_all()
@@ -84,7 +89,7 @@ def index():
         matricula = request.form.get("matricula","").strip()
         asistencia = request.form.get("asistencia")
 
-        if not asistencia:
+        if config.menu_activo and not asistencia:
             error = "Seleccioná una opción del menú"
         elif not solo_letras(nombre):
             error = "Nombre inválido"
@@ -100,7 +105,7 @@ def index():
                     nombre=nombre,
                     apellido=apellido,
                     matricula=matricula,
-                    asistencia=asistencia
+                    asistencia=asistencia if asistencia else ""
                 ))
                 db.session.commit()
                 return redirect("/")
@@ -111,6 +116,7 @@ def index():
     return render_template("index.html",
         participantes=participantes,
         menu_opciones=menu_opciones,
+        menu_activo=config.menu_activo,
         error=error,
         admin=session.get("admin",False),
         bg_path=bg,
@@ -126,9 +132,14 @@ def update_config():
         return "No autorizado",403
 
     config = Config.query.first()
+
     config.titulo = request.form.get("titulo")
     config.subtitulo = request.form.get("subtitulo")
+    config.subtitulo2 = request.form.get("subtitulo2")
+    config.subtitulo3 = request.form.get("subtitulo3")
+
     config.opciones_menu = request.form.get("opciones_menu")
+    config.menu_activo = True if request.form.get("menu_activo") == "on" else False
 
     db.session.commit()
     return redirect("/")
