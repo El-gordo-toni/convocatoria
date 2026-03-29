@@ -28,12 +28,16 @@ class Participante(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
     matricula = db.Column(db.String(50))
-    asistencia = db.Column(db.String(10), nullable=False)
+    asistencia = db.Column(db.String(50), nullable=False)
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), default="🏌️ Torneo Matungo")
     subtitulo = db.Column(db.String(200), default="Anotate para la próxima fecha")
+
+    opcion1 = db.Column(db.String(50), default="Voy")
+    opcion2 = db.Column(db.String(50), default="Dudo")
+    opcion3 = db.Column(db.String(50), default="No puedo")
 
 with app.app_context():
     db.create_all()
@@ -71,6 +75,7 @@ def index():
         return Response(status=200)
 
     error = None
+    config = Config.query.first()
 
     if request.method == "POST":
         nombre = request.form["nombre"].strip()
@@ -99,16 +104,16 @@ def index():
 
     participantes = Participante.query.order_by(Participante.id.desc()).all()
 
-    van = [p for p in participantes if p.asistencia=="Si"]
-    no_van = [p for p in participantes if p.asistencia=="No"]
-
-    config = Config.query.first()
+    grupo1 = [p for p in participantes if p.asistencia == config.opcion1]
+    grupo2 = [p for p in participantes if p.asistencia == config.opcion2]
+    grupo3 = [p for p in participantes if p.asistencia == config.opcion3]
 
     bg = "/static_bg" if os.path.exists("/var/data/uploads/fondo.jpg") else None
 
     return render_template("index.html",
-        van=van,
-        no_van=no_van,
+        grupo1=grupo1,
+        grupo2=grupo2,
+        grupo3=grupo3,
         error=error,
         admin=session.get("admin",False),
         bg_path=bg,
@@ -116,25 +121,18 @@ def index():
     )
 
 # =========================
-# DATA TIEMPO REAL
+# DATA
 # =========================
 @app.route("/data")
 def data():
-    participantes = Participante.query.order_by(Participante.id.desc()).all()
-
-    return jsonify({
-        "van":[
-            {"id":p.id,"nombre":p.nombre,"apellido":p.apellido}
-            for p in participantes if p.asistencia=="Si"
-        ],
-        "no_van":[
-            {"id":p.id,"nombre":p.nombre,"apellido":p.apellido}
-            for p in participantes if p.asistencia=="No"
-        ]
-    })
+    participantes = Participante.query.all()
+    return jsonify([
+        {"nombre":p.nombre,"apellido":p.apellido,"asistencia":p.asistencia}
+        for p in participantes
+    ])
 
 # =========================
-# EDITAR TITULO
+# CONFIG
 # =========================
 @app.route("/update_config", methods=["POST"])
 def update_config():
@@ -142,8 +140,13 @@ def update_config():
         return "No autorizado",403
 
     config = Config.query.first()
+
     config.titulo = request.form.get("titulo")
     config.subtitulo = request.form.get("subtitulo")
+
+    config.opcion1 = request.form.get("opcion1")
+    config.opcion2 = request.form.get("opcion2")
+    config.opcion3 = request.form.get("opcion3")
 
     db.session.commit()
     return redirect("/")
