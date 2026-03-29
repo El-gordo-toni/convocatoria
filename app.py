@@ -38,7 +38,6 @@ class Config(db.Model):
 
 with app.app_context():
     db.create_all()
-
     if not Config.query.first():
         db.session.add(Config())
         db.session.commit()
@@ -73,16 +72,18 @@ def index():
 
     error = None
     config = Config.query.first()
-
     menu_opciones = config.opciones_menu.split(",")
 
     if request.method == "POST":
         nombre = request.form["nombre"].strip()
         apellido = request.form["apellido"].strip()
         matricula = request.form.get("matricula","").strip()
-        asistencia = request.form["asistencia"]
+        asistencia = request.form.get("asistencia")
 
-        if not solo_letras(nombre):
+        # 🔥 VALIDACIÓN CLAVE
+        if not asistencia:
+            error = "Seleccioná una opción del menú"
+        elif not solo_letras(nombre):
             error = "Nombre inválido"
         elif not solo_letras(apellido):
             error = "Apellido inválido"
@@ -102,7 +103,6 @@ def index():
                 return redirect("/")
 
     participantes = Participante.query.order_by(Participante.id.desc()).all()
-
     bg = "/static_bg" if os.path.exists("/var/data/uploads/fondo.jpg") else None
 
     return render_template("index.html",
@@ -123,7 +123,6 @@ def update_config():
         return "No autorizado",403
 
     config = Config.query.first()
-
     config.titulo = request.form.get("titulo")
     config.subtitulo = request.form.get("subtitulo")
     config.opciones_menu = request.form.get("opciones_menu")
