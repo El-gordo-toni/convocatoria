@@ -34,7 +34,6 @@ class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), default="🏌️ Torneo Matungo")
     subtitulo = db.Column(db.String(200), default="Anotate para la próxima fecha")
-
     opciones_menu = db.Column(db.Text, default="8:00 AM,9:00 AM,10:00 AM")
 
 with app.app_context():
@@ -104,14 +103,10 @@ def index():
 
     participantes = Participante.query.order_by(Participante.id.desc()).all()
 
-    grupos = {}
-    for op in menu_opciones:
-        grupos[op] = [p for p in participantes if p.asistencia == op]
-
     bg = "/static_bg" if os.path.exists("/var/data/uploads/fondo.jpg") else None
 
     return render_template("index.html",
-        grupos=grupos,
+        participantes=participantes,
         menu_opciones=menu_opciones,
         error=error,
         admin=session.get("admin",False),
