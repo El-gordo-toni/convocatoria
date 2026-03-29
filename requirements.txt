@@ -3,3 +3,5 @@ flask_sqlalchemy
 gunicorn
 openpyxl
 werkzeug
+flask-socketio
+eventlet
