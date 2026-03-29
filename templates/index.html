@@ -35,16 +35,12 @@ body {
     position:relative;
 }
 
-.input-group {
-    display:flex;
-    flex-direction:column;
-    margin-bottom:12px;
-}
-
 input, select {
     padding:12px;
     border-radius:8px;
     border:1px solid #ccc;
+    margin-bottom:10px;
+    width:100%;
 }
 
 button {
@@ -55,7 +51,6 @@ button {
     background:#1f7a3f;
     color:white;
     font-weight:bold;
-    margin-top:10px;
     cursor:pointer;
 }
 
@@ -96,9 +91,9 @@ button {
 <input name="matricula" placeholder="Matrícula (opcional)">
 
 <select name="asistencia">
-<option value="{{ config.opcion1 }}">{{ config.opcion1 }}</option>
-<option value="{{ config.opcion2 }}">{{ config.opcion2 }}</option>
-<option value="{{ config.opcion3 }}">{{ config.opcion3 }}</option>
+{% for op in menu_opciones %}
+<option value="{{ op }}">{{ op }}</option>
+{% endfor %}
 </select>
 
 <button>Anotarme</button>
@@ -115,15 +110,20 @@ button {
 <h3>Panel Admin</h3>
 
 <form method="POST" action="/update_config">
-
 <input name="titulo" value="{{ config.titulo }}">
 <input name="subtitulo" value="{{ config.subtitulo }}">
 
-<input name="opcion1" value="{{ config.opcion1 }}">
-<input name="opcion2" value="{{ config.opcion2 }}">
-<input name="opcion3" value="{{ config.opcion3 }}">
+<label>Opciones (separadas por coma)</label>
+<input name="opciones_menu" value="{{ config.opciones_menu }}">
 
 <button>Guardar</button>
+</form>
+
+<hr>
+
+<form method="POST" action="/upload_bg" enctype="multipart/form-data">
+<input type="file" name="imagen">
+<button>Subir fondo</button>
 </form>
 
 <hr>
@@ -148,34 +148,20 @@ button {
 
 <div class="right">
 
-<h3>{{ config.opcion1 }} ({{ grupo1|length }})</h3>
-{% for p in grupo1 %}
+{% for op, lista in grupos.items() %}
+<h3>{{ op }} ({{ lista|length }})</h3>
+
+{% for p in lista %}
 <div class="card">
 {{ p.nombre }} {{ p.apellido }}
+
 {% if admin %}
 <a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
 {% endif %}
+
 </div>
 {% endfor %}
 
-<h3>{{ config.opcion2 }} ({{ grupo2|length }})</h3>
-{% for p in grupo2 %}
-<div class="card">
-{{ p.nombre }} {{ p.apellido }}
-{% if admin %}
-<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
-{% endif %}
-</div>
-{% endfor %}
-
-<h3>{{ config.opcion3 }} ({{ grupo3|length }})</h3>
-{% for p in grupo3 %}
-<div class="card">
-{{ p.nombre }} {{ p.apellido }}
-{% if admin %}
-<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
-{% endif %}
-</div>
 {% endfor %}
 
 </div>
