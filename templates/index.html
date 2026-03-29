@@ -86,24 +86,27 @@ button {
 <div class="card">
 <form method="POST">
 
+{% if error %}
+<div style="color:red; margin-bottom:10px; font-weight:bold;">
+⚠️ {{ error }}
+</div>
+{% endif %}
+
 <input name="nombre" placeholder="Nombre" required>
 <input name="apellido" placeholder="Apellido" required>
 <input name="matricula" placeholder="Matrícula (opcional)">
 
-<div class="input-group">
 <label style="font-weight:bold;">📋 Menú</label>
-
-<select name="asistencia">
+<select name="asistencia" required>
 <option value="" disabled selected>Seleccionar opción</option>
 
 {% for op in menu_opciones %}
 <option value="{{ op }}">{{ op }}</option>
 {% endfor %}
-
 </select>
-</div>
 
 <button>Anotarme</button>
+
 </form>
 </div>
 
