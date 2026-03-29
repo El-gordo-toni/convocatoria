@@ -162,6 +162,36 @@ button {
 
 </div>
 </div>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
+<script>
+const socket = io();
+
+// sonido
+const audio = new Audio("https://actions.google.com/sounds/v1/cartoon/wood_plank_flicks.ogg");
+
+socket.on("nuevo", function(data){
+
+    let contenedor = document.querySelector(".right");
+
+    let div = document.createElement("div");
+    div.className = "card";
+    div.style.border = "3px solid #00ff99";
+    div.style.transform = "scale(1.1)";
+    div.style.transition = "0.3s";
+
+    div.innerHTML = data.nombre + " " + data.apellido;
+
+    contenedor.prepend(div);
+
+    // animación
+    setTimeout(()=>{
+        div.style.transform = "scale(1)";
+    }, 100);
+
+    // sonido
+    audio.play();
+});
+</script>
 </body>
 </html>
