@@ -148,20 +148,19 @@ button {
 
 <div class="right">
 
-{% for op, lista in grupos.items() %}
-<h3>{{ op }} ({{ lista|length }})</h3>
+<h3>👥 Jugadores ({{ participantes|length }})</h3>
 
-{% for p in lista %}
+{% for p in participantes %}
 <div class="card">
 {{ p.nombre }} {{ p.apellido }}
 
 {% if admin %}
-<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
+<a href="/delete/{{ p.id }}">
+<button class="btn-delete">❌</button>
+</a>
 {% endif %}
 
 </div>
-{% endfor %}
-
 {% endfor %}
 
 </div>
