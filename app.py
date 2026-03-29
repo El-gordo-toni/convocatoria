@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, Response, session, 
 from flask_sqlalchemy import SQLAlchemy
 import os
 import re
-from openpyxl import Workbook
+import json
 
 app = Flask(__name__)
 
@@ -25,15 +25,16 @@ db = SQLAlchemy(app)
 # =========================
 class Participante(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    nombre = db.Column(db.String(100), nullable=False)
-    apellido = db.Column(db.String(100), nullable=False)
+    nombre = db.Column(db.String(100))
+    apellido = db.Column(db.String(100))
     matricula = db.Column(db.String(50))
-    asistencia = db.Column(db.String(50), nullable=False)
+    asistencia = db.Column(db.String(50))
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), default="🏌️ Torneo Matungo")
     subtitulo = db.Column(db.String(200), default="Anotate para la próxima fecha")
+    opciones = db.Column(db.Text, default='["Confirmado","Duda","No juega"]')
 
 with app.app_context():
     db.create_all()
@@ -70,11 +71,12 @@ def index():
         return Response(status=200)
 
     error = None
+    config = Config.query.first()
 
     if request.method == "POST":
-        nombre = request.form["nombre"].strip()
-        apellido = request.form["apellido"].strip()
-        matricula = request.form.get("matricula","").strip()
+        nombre = request.form["nombre"]
+        apellido = request.form["apellido"]
+        matricula = request.form.get("matricula","")
         asistencia = request.form["asistencia"]
 
         if not solo_letras(nombre):
@@ -94,16 +96,19 @@ def index():
             return redirect("/")
 
     participantes = Participante.query.order_by(Participante.id.desc()).all()
-    config = Config.query.first()
+
+    bg = "/static_bg" if os.path.exists("/var/data/uploads/fondo.jpg") else None
 
     return render_template("index.html",
         participantes=participantes,
         admin=session.get("admin",False),
-        config=config
+        config=config,
+        opciones=json.loads(config.opciones),
+        bg_path=bg
     )
 
 # =========================
-# DATA TIEMPO REAL
+# DATA
 # =========================
 @app.route("/data")
 def data():
@@ -112,12 +117,11 @@ def data():
     return jsonify({
         "jugadores":[
             {
-                "id": p.id,
-                "nombre": p.nombre,
-                "apellido": p.apellido,
-                "asistencia": p.asistencia
-            }
-            for p in participantes
+                "id":p.id,
+                "nombre":p.nombre,
+                "apellido":p.apellido,
+                "asistencia":p.asistencia
+            } for p in participantes
         ]
     })
 
@@ -130,14 +134,37 @@ def update_config():
         return "No autorizado",403
 
     config = Config.query.first()
+
     config.titulo = request.form.get("titulo")
     config.subtitulo = request.form.get("subtitulo")
-    db.session.commit()
 
+    opciones = request.form.get("opciones")
+    config.opciones = json.dumps(opciones.split(","))
+
+    db.session.commit()
     return redirect("/")
 
 # =========================
-# BORRAR
+# FONDO
+# =========================
+@app.route("/upload_bg", methods=["POST"])
+def upload_bg():
+    if not session.get("admin"):
+        return "No autorizado",403
+
+    file = request.files.get("imagen")
+
+    if file:
+        file.save("/var/data/uploads/fondo.jpg")
+
+    return redirect("/")
+
+@app.route("/static_bg")
+def bg():
+    return send_file("/var/data/uploads/fondo.jpg")
+
+# =========================
+# BORRAR / RESET
 # =========================
 @app.route("/delete/<int:id>")
 def delete(id):
@@ -151,9 +178,6 @@ def delete(id):
 
     return redirect("/")
 
-# =========================
-# RESET
-# =========================
 @app.route("/reset")
 def reset():
     if not session.get("admin"):
@@ -163,8 +187,6 @@ def reset():
     db.session.commit()
     return redirect("/")
 
-# =========================
-# RUN
 # =========================
 if __name__ == "__main__":
     app.run(debug=True)
