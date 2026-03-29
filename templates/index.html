@@ -11,14 +11,12 @@ body {
     background:url("{{ bg_path if bg_path else 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e' }}") center/cover fixed;
 }
 
-/* Fondo oscuro */
 .overlay {
     background:rgba(0,0,0,0.7);
     min-height:100vh;
     padding:20px;
 }
 
-/* Layout */
 .container {
     display:flex;
     gap:20px;
@@ -26,11 +24,8 @@ body {
     margin:auto;
 }
 
-.left,.right {
-    flex:1;
-}
+.left,.right { flex:1; }
 
-/* Cards */
 .card {
     background:white;
     color:black;
@@ -40,27 +35,18 @@ body {
     position:relative;
 }
 
-/* Inputs */
 .input-group {
     display:flex;
     flex-direction:column;
     margin-bottom:12px;
 }
 
-.input-group label {
-    font-size:13px;
-    margin-bottom:5px;
-    color:#444;
-}
-
 input, select {
     padding:12px;
     border-radius:8px;
     border:1px solid #ccc;
-    font-size:14px;
 }
 
-/* Botones */
 button {
     width:100%;
     padding:12px;
@@ -82,16 +68,12 @@ button {
     top:10px;
 }
 
-/* Panel admin destacado */
 .admin-card {
     border:2px solid #1f7a3f;
 }
 
-/* Responsive */
 @media(max-width:768px){
-    .container {
-        flex-direction:column;
-    }
+    .container { flex-direction:column; }
 }
 </style>
 </head>
@@ -104,125 +86,95 @@ button {
 
 <div class="container">
 
-<!-- IZQUIERDA -->
 <div class="left">
 
-<!-- FORM -->
 <div class="card">
 <form method="POST">
 
-<div class="input-group">
-<label>Nombre</label>
-<input name="nombre" required>
-</div>
+<input name="nombre" placeholder="Nombre" required>
+<input name="apellido" placeholder="Apellido" required>
+<input name="matricula" placeholder="Matrícula (opcional)">
 
-<div class="input-group">
-<label>Apellido</label>
-<input name="apellido" required>
-</div>
-
-<div class="input-group">
-<label>Matrícula (opcional)</label>
-<input name="matricula">
-</div>
-
-<div class="input-group">
-<label>Asistencia</label>
 <select name="asistencia">
-<option value="Si">Voy</option>
-<option value="No">No voy</option>
+<option value="{{ config.opcion1 }}">{{ config.opcion1 }}</option>
+<option value="{{ config.opcion2 }}">{{ config.opcion2 }}</option>
+<option value="{{ config.opcion3 }}">{{ config.opcion3 }}</option>
 </select>
-</div>
 
 <button>Anotarme</button>
-
 </form>
 </div>
 
-<!-- 🔥 BOTÓN WHATSAPP ACÁ -->
 <div class="card">
-    <button onclick="compartir()">📲 Compartir por WhatsApp</button>
+<button onclick="compartir()">📲 Compartir por WhatsApp</button>
 </div>
 
-<!-- ADMIN -->
 {% if admin %}
 <div class="card admin-card">
 
-<h3>⚙️ Panel Admin</h3>
+<h3>Panel Admin</h3>
 
 <form method="POST" action="/update_config">
 
-<div class="input-group">
-<label>Título</label>
 <input name="titulo" value="{{ config.titulo }}">
-</div>
-
-<div class="input-group">
-<label>Subtítulo</label>
 <input name="subtitulo" value="{{ config.subtitulo }}">
-</div>
 
-<button>Guardar cambios</button>
+<input name="opcion1" value="{{ config.opcion1 }}">
+<input name="opcion2" value="{{ config.opcion2 }}">
+<input name="opcion3" value="{{ config.opcion3 }}">
+
+<button>Guardar</button>
 </form>
 
 <hr>
 
-<a href="/reset">🔄 Resetear lista</a><br><br>
-<a href="/export">📊 Exportar Excel</a><br><br>
-<a href="/logout">🚪 Cerrar sesión</a>
+<a href="/reset">Resetear</a><br><br>
+<a href="/export">Exportar Excel</a><br><br>
+<a href="/logout">Salir</a>
 
 </div>
 {% else %}
 
 <div class="card">
-
-<h3>Admin</h3>
-
 <form method="POST" action="/admin">
-
-<div class="input-group">
-<label>Clave</label>
-<input type="password" name="password">
-</div>
-
+<input type="password" name="password" placeholder="Clave admin">
 <button>Entrar</button>
-
 </form>
-
 </div>
 
 {% endif %}
 
 </div>
 
-<!-- DERECHA -->
 <div class="right">
 
-<h3>🟢 Van ({{ van|length }})</h3>
-{% for p in van %}
+<h3>{{ config.opcion1 }} ({{ grupo1|length }})</h3>
+{% for p in grupo1 %}
 <div class="card">
 {{ p.nombre }} {{ p.apellido }}
-
 {% if admin %}
-<a href="/delete/{{ p.id }}">
-<button class="btn-delete">❌</button>
-</a>
+<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
 {% endif %}
-
 </div>
 {% endfor %}
 
-<h3>🔴 No van ({{ no_van|length }})</h3>
-{% for p in no_van %}
+<h3>{{ config.opcion2 }} ({{ grupo2|length }})</h3>
+{% for p in grupo2 %}
 <div class="card">
 {{ p.nombre }} {{ p.apellido }}
-
 {% if admin %}
-<a href="/delete/{{ p.id }}">
-<button class="btn-delete">❌</button>
-</a>
+<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
 {% endif %}
+</div>
+{% endfor %}
 
+<h3>{{ config.opcion3 }} ({{ grupo3|length }})</h3>
+{% for p in grupo3 %}
+<div class="card">
+{{ p.nombre }} {{ p.apellido }}
+{% if admin %}
+<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
+{% endif %}
 </div>
 {% endfor %}
 
@@ -230,8 +182,6 @@ button {
 
 </div>
 </div>
-
-</div> <!-- cierre overlay o container -->
 
 <script>
 function compartir(){
