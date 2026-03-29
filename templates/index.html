@@ -4,21 +4,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {margin:0;font-family:Arial;background:#111;color:white;}
-.container{max-width:900px;margin:auto;padding:20px;}
-.card{background:white;color:black;padding:15px;border-radius:10px;margin-bottom:15px;position:relative;}
-button{width:100%;padding:10px;background:#1f7a3f;color:white;border:none;border-radius:8px;}
-.btn-delete{background:red;width:auto;position:absolute;top:10px;right:10px;}
+body {
+    margin:0;
+    font-family:Arial;
+    color:white;
+    background:url("{{ bg_path if bg_path else 'https://images.unsplash.com/photo-1599058917765-a780eda07a3e' }}") center/cover fixed;
+}
+.overlay {background:rgba(0,0,0,0.7);min-height:100vh;padding:20px;}
+.container {max-width:900px;margin:auto;}
+
+.card {background:white;color:black;padding:15px;border-radius:10px;margin-bottom:15px;position:relative;}
+button {width:100%;padding:10px;background:#1f7a3f;color:white;border:none;border-radius:8px;}
+.btn-delete {background:red;width:auto;position:absolute;top:10px;right:10px;}
 </style>
 </head>
 
 <body>
-
+<div class="overlay">
 <div class="container">
 
 <h1>{{ config.titulo }}</h1>
 <p>{{ config.subtitulo }}</p>
 
+<!-- FORM -->
 <div class="card">
 <form method="POST">
 
@@ -26,11 +34,10 @@ button{width:100%;padding:10px;background:#1f7a3f;color:white;border:none;border
 <input name="apellido" placeholder="Apellido" required><br><br>
 <input name="matricula" placeholder="Matrícula"><br><br>
 
-<select name="asistencia" required>
-<option value="">Seleccionar</option>
-<option value="Confirmado">🏌️ Confirmado</option>
-<option value="Duda">🤔 En duda</option>
-<option value="No juega">❌ No juega</option>
+<select name="asistencia">
+{% for op in opciones %}
+<option value="{{ op }}">{{ op }}</option>
+{% endfor %}
 </select>
 
 <br><br>
@@ -39,26 +46,47 @@ button{width:100%;padding:10px;background:#1f7a3f;color:white;border:none;border
 </form>
 </div>
 
+<!-- WHATSAPP -->
 <div class="card">
 <button onclick="compartir()">📲 Compartir</button>
 </div>
 
+<!-- ADMIN -->
 {% if admin %}
 <div class="card">
+<h3>⚙️ Panel Admin</h3>
+
 <form method="POST" action="/update_config">
 <input name="titulo" value="{{ config.titulo }}">
 <input name="subtitulo" value="{{ config.subtitulo }}">
-<button>Guardar</button>
+<input name="opciones" value="{{ opciones|join(',') }}" placeholder="Confirmado,Duda,No juega">
+<button>Guardar config</button>
 </form>
+
+<br>
+
+<form method="POST" action="/upload_bg" enctype="multipart/form-data">
+<input type="file" name="imagen">
+<button>Subir fondo</button>
+</form>
+
+<br>
 
 <a href="/reset">Reset</a><br>
 <a href="/logout">Salir</a>
 </div>
+{% else %}
+<div class="card">
+<form method="POST" action="/admin">
+<input type="password" name="password" placeholder="Clave admin">
+<button>Entrar</button>
+</form>
+</div>
 {% endif %}
 
-<h3>📋 Participantes (<span id="count-van">{{ participantes|length }}</span>)</h3>
+<h3>📋 Participantes (<span id="count">{{ participantes|length }}</span>)</h3>
 
-<div id="lista-van">
+<div id="lista">
 {% for p in participantes %}
 <div class="card">
 {{ p.nombre }} {{ p.apellido }}<br>
@@ -71,6 +99,7 @@ button{width:100%;padding:10px;background:#1f7a3f;color:white;border:none;border
 {% endfor %}
 </div>
 
+</div>
 </div>
 
 <script>
@@ -95,8 +124,8 @@ async function actualizar(){
         </div>`;
     });
 
-    document.getElementById("lista-van").innerHTML = html;
-    document.getElementById("count-van").innerText = d.jugadores.length;
+    document.getElementById("lista").innerHTML = html;
+    document.getElementById("count").innerText = d.jugadores.length;
 }
 
 setInterval(actualizar, 5000);
