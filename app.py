@@ -28,16 +28,14 @@ class Participante(db.Model):
     nombre = db.Column(db.String(100), nullable=False)
     apellido = db.Column(db.String(100), nullable=False)
     matricula = db.Column(db.String(50))
-    asistencia = db.Column(db.String(50), nullable=False)
+    asistencia = db.Column(db.String(100), nullable=False)
 
 class Config(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     titulo = db.Column(db.String(200), default="🏌️ Torneo Matungo")
     subtitulo = db.Column(db.String(200), default="Anotate para la próxima fecha")
 
-    opcion1 = db.Column(db.String(50), default="Voy")
-    opcion2 = db.Column(db.String(50), default="Dudo")
-    opcion3 = db.Column(db.String(50), default="No puedo")
+    opciones_menu = db.Column(db.Text, default="8:00 AM,9:00 AM,10:00 AM")
 
 with app.app_context():
     db.create_all()
@@ -77,6 +75,8 @@ def index():
     error = None
     config = Config.query.first()
 
+    menu_opciones = config.opciones_menu.split(",")
+
     if request.method == "POST":
         nombre = request.form["nombre"].strip()
         apellido = request.form["apellido"].strip()
@@ -104,32 +104,20 @@ def index():
 
     participantes = Participante.query.order_by(Participante.id.desc()).all()
 
-    grupo1 = [p for p in participantes if p.asistencia == config.opcion1]
-    grupo2 = [p for p in participantes if p.asistencia == config.opcion2]
-    grupo3 = [p for p in participantes if p.asistencia == config.opcion3]
+    grupos = {}
+    for op in menu_opciones:
+        grupos[op] = [p for p in participantes if p.asistencia == op]
 
     bg = "/static_bg" if os.path.exists("/var/data/uploads/fondo.jpg") else None
 
     return render_template("index.html",
-        grupo1=grupo1,
-        grupo2=grupo2,
-        grupo3=grupo3,
+        grupos=grupos,
+        menu_opciones=menu_opciones,
         error=error,
         admin=session.get("admin",False),
         bg_path=bg,
         config=config
     )
-
-# =========================
-# DATA
-# =========================
-@app.route("/data")
-def data():
-    participantes = Participante.query.all()
-    return jsonify([
-        {"nombre":p.nombre,"apellido":p.apellido,"asistencia":p.asistencia}
-        for p in participantes
-    ])
 
 # =========================
 # CONFIG
@@ -143,10 +131,7 @@ def update_config():
 
     config.titulo = request.form.get("titulo")
     config.subtitulo = request.form.get("subtitulo")
-
-    config.opcion1 = request.form.get("opcion1")
-    config.opcion2 = request.form.get("opcion2")
-    config.opcion3 = request.form.get("opcion3")
+    config.opciones_menu = request.form.get("opciones_menu")
 
     db.session.commit()
     return redirect("/")
@@ -188,7 +173,7 @@ def export():
 
     wb = Workbook()
     ws = wb.active
-    ws.append(["Nombre","Apellido","Matrícula","Asistencia"])
+    ws.append(["Nombre","Apellido","Matrícula","Horario"])
 
     for p in Participante.query.all():
         ws.append([p.nombre,p.apellido,p.matricula,p.asistencia])
