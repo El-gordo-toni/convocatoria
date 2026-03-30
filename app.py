@@ -132,9 +132,3 @@ def index():
         bg_path=bg,
         config=config
     )
-
-# =========================
-# RUN
-# =========================
-if __name__ == "__main__":
-    socketio.run(app, debug=True)
