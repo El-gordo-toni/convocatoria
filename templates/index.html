@@ -24,9 +24,7 @@ body {
     margin:auto;
 }
 
-.left,.right {
-    flex:1;
-}
+.left,.right { flex:1; }
 
 .card {
     background:white;
@@ -56,18 +54,17 @@ button {
     cursor:pointer;
 }
 
+.btn-delete {
+    background:red;
+    width:auto;
+    padding:6px 10px;
+    position:absolute;
+    right:10px;
+    top:10px;
+}
+
 .admin-card {
     border:2px solid #1f7a3f;
-}
-
-#toast {
-    display:none;
-}
-
-@media(max-width:768px){
-    .container {
-        flex-direction:column;
-    }
 }
 </style>
 </head>
@@ -82,12 +79,14 @@ button {
 
 <div class="container">
 
-<!-- IZQUIERDA -->
 <div class="left">
 
 <div class="card">
+<form method="POST">
 
-<form id="form">
+{% if error %}
+<div style="color:red; font-weight:bold;">⚠️ {{ error }}</div>
+{% endif %}
 
 <input name="nombre" placeholder="Nombre" required>
 <input name="apellido" placeholder="Apellido" required>
@@ -104,9 +103,7 @@ button {
 {% endif %}
 
 <button>Anotarme</button>
-
 </form>
-
 </div>
 
 {% if admin %}
@@ -117,6 +114,7 @@ button {
 <input name="subtitulo" value="{{ config.subtitulo }}">
 <input name="subtitulo2" value="{{ config.subtitulo2 }}">
 <input name="subtitulo3" value="{{ config.subtitulo3 }}">
+
 <input name="opciones_menu" value="{{ config.opciones_menu }}">
 
 <label>
@@ -145,12 +143,18 @@ button {
 
 </div>
 
-<!-- DERECHA -->
-<div class="right" id="lista">
+<div class="right">
+
+<h3>👥 Jugadores ({{ participantes|length }})</h3>
 
 {% for p in participantes %}
 <div class="card">
 {{ p.nombre }} {{ p.apellido }}
+
+{% if admin %}
+<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
+{% endif %}
+
 </div>
 {% endfor %}
 
@@ -158,83 +162,6 @@ button {
 
 </div>
 </div>
-
-<div id="toast"></div>
-
-<!-- SOCKET -->
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-
-<script>
-const socket = io();
-const form = document.getElementById("form");
-const lista = document.getElementById("lista");
-const toast = document.getElementById("toast");
-
-// 🔔 NOTIFICACIÓN
-function mostrarToast(msg){
-    toast.innerText = msg;
-    toast.style.position = "fixed";
-    toast.style.bottom = "20px";
-    toast.style.left = "50%";
-    toast.style.transform = "translateX(-50%)";
-    toast.style.background = "#1f7a3f";
-    toast.style.color = "white";
-    toast.style.padding = "10px 20px";
-    toast.style.borderRadius = "8px";
-    toast.style.display = "block";
-
-    setTimeout(()=>toast.style.display="none",2000);
-}
-
-// 🚀 ENVÍO SIN RECARGA
-form.addEventListener("submit", function(e){
-    e.preventDefault();
-
-    let formData = new FormData(form);
-
-    fetch("/registrar", {
-        method:"POST",
-        body: formData
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        if(data.ok){
-            form.reset();
-            mostrarToast("✅ Anotado correctamente");
-        } else {
-            mostrarToast("⚠️ " + data.msg);
-        }
-    });
-});
-
-// ⚡ TIEMPO REAL
-socket.on("nuevo", function(data){
-
-    let texto = data.nombre + " " + data.apellido;
-
-    // evitar duplicados
-    let existe = Array.from(document.querySelectorAll(".card"))
-        .some(el => el.innerText === texto);
-
-    if (existe) return;
-
-    let div = document.createElement("div");
-    div.className = "card";
-    div.style.border = "3px solid #00ff99";
-    div.style.transform = "scale(1.1)";
-    div.style.transition = "0.3s";
-
-    div.innerHTML = texto;
-
-    lista.prepend(div);
-
-    setTimeout(()=>{
-        div.style.transform = "scale(1)";
-    },100);
-
-    mostrarToast("🎉 Nuevo jugador: " + texto);
-});
-</script>
 
 </body>
 </html>
