@@ -162,6 +162,13 @@ button {
 
 </div>
 </div>
-
+<script>
+function compartir(){
+    let url = window.location.href;
+    let texto = "🏌️ Sumate al Torneo Matungo!\n\nAnotate acá:\n" + url;
+    let link = "https://wa.me/?text=" + encodeURIComponent(texto);
+    window.open(link, "_blank");
+}
+</script>
 </body>
 </html>
