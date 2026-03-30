@@ -24,7 +24,9 @@ body {
     margin:auto;
 }
 
-.left,.right { flex:1; }
+.left,.right {
+    flex:1;
+}
 
 .card {
     background:white;
@@ -54,17 +56,18 @@ button {
     cursor:pointer;
 }
 
-.btn-delete {
-    background:red;
-    width:auto;
-    padding:6px 10px;
-    position:absolute;
-    right:10px;
-    top:10px;
-}
-
 .admin-card {
     border:2px solid #1f7a3f;
+}
+
+#toast {
+    display:none;
+}
+
+@media(max-width:768px){
+    .container {
+        flex-direction:column;
+    }
 }
 </style>
 </head>
@@ -79,14 +82,12 @@ button {
 
 <div class="container">
 
+<!-- IZQUIERDA -->
 <div class="left">
 
 <div class="card">
-<form method="POST">
 
-{% if error %}
-<div style="color:red; font-weight:bold;">⚠️ {{ error }}</div>
-{% endif %}
+<form id="form">
 
 <input name="nombre" placeholder="Nombre" required>
 <input name="apellido" placeholder="Apellido" required>
@@ -103,7 +104,9 @@ button {
 {% endif %}
 
 <button>Anotarme</button>
+
 </form>
+
 </div>
 
 {% if admin %}
@@ -114,7 +117,6 @@ button {
 <input name="subtitulo" value="{{ config.subtitulo }}">
 <input name="subtitulo2" value="{{ config.subtitulo2 }}">
 <input name="subtitulo3" value="{{ config.subtitulo3 }}">
-
 <input name="opciones_menu" value="{{ config.opciones_menu }}">
 
 <label>
@@ -143,18 +145,12 @@ button {
 
 </div>
 
-<div class="right">
-
-<h3>👥 Jugadores ({{ participantes|length }})</h3>
+<!-- DERECHA -->
+<div class="right" id="lista">
 
 {% for p in participantes %}
 <div class="card">
 {{ p.nombre }} {{ p.apellido }}
-
-{% if admin %}
-<a href="/delete/{{ p.id }}"><button class="btn-delete">❌</button></a>
-{% endif %}
-
 </div>
 {% endfor %}
 
@@ -162,6 +158,10 @@ button {
 
 </div>
 </div>
+
+<div id="toast"></div>
+
+<!-- SOCKET -->
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
 <script>
@@ -170,7 +170,7 @@ const form = document.getElementById("form");
 const lista = document.getElementById("lista");
 const toast = document.getElementById("toast");
 
-// NOTIFICACIÓN
+// 🔔 NOTIFICACIÓN
 function mostrarToast(msg){
     toast.innerText = msg;
     toast.style.position = "fixed";
@@ -186,7 +186,7 @@ function mostrarToast(msg){
     setTimeout(()=>toast.style.display="none",2000);
 }
 
-// ENVÍO SIN RECARGA
+// 🚀 ENVÍO SIN RECARGA
 form.addEventListener("submit", function(e){
     e.preventDefault();
 
@@ -207,7 +207,7 @@ form.addEventListener("submit", function(e){
     });
 });
 
-// SOCKET TIEMPO REAL
+// ⚡ TIEMPO REAL
 socket.on("nuevo", function(data){
 
     let texto = data.nombre + " " + data.apellido;
@@ -235,5 +235,6 @@ socket.on("nuevo", function(data){
     mostrarToast("🎉 Nuevo jugador: " + texto);
 });
 </script>
+
 </body>
 </html>
