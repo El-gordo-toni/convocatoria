@@ -1,4 +1,7 @@
-from flask import Flask, render_template, request, redirect, session, send_file
+import eventlet
+eventlet.monkey_patch()
+
+from flask import Flask, render_template, request, redirect, session, send_file, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_socketio import SocketIO
 import os
@@ -6,7 +9,7 @@ import re
 from openpyxl import Workbook
 
 app = Flask(__name__)
-socketio = SocketIO(app)
+socketio = SocketIO(app, async_mode="eventlet", cors_allowed_origins="*")
 
 app.secret_key = "super_secret_key"
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD")
@@ -72,115 +75,66 @@ def logout():
     return redirect("/")
 
 # =========================
+# API REGISTRO (SIN RECARGA)
+# =========================
+@app.route("/registrar", methods=["POST"])
+def registrar():
+
+    config = Config.query.first()
+
+    nombre = request.form["nombre"].strip()
+    apellido = request.form["apellido"].strip()
+    matricula = request.form.get("matricula","").strip()
+    asistencia = request.form.get("asistencia")
+
+    if config.menu_activo and not asistencia:
+        return jsonify({"ok":False,"msg":"Seleccioná una opción"})
+    if not solo_letras(nombre):
+        return jsonify({"ok":False,"msg":"Nombre inválido"})
+    if not solo_letras(apellido):
+        return jsonify({"ok":False,"msg":"Apellido inválido"})
+    if matricula and not solo_numeros(matricula):
+        return jsonify({"ok":False,"msg":"Matrícula inválida"})
+
+    nuevo = Participante(
+        nombre=nombre,
+        apellido=apellido,
+        matricula=matricula,
+        asistencia=asistencia if asistencia else ""
+    )
+    db.session.add(nuevo)
+    db.session.commit()
+
+    socketio.emit("nuevo", {
+        "nombre": nuevo.nombre,
+        "apellido": nuevo.apellido
+    }, broadcast=True)
+
+    return jsonify({"ok":True})
+    
+# =========================
 # HOME
 # =========================
-@app.route("/", methods=["GET","POST"])
+@app.route("/")
 def index():
 
-    error = None
     config = Config.query.first()
+    participantes = Participante.query.order_by(Participante.id.desc()).all()
     menu_opciones = config.opciones_menu.split(",")
 
-    if request.method == "POST":
-        nombre = request.form["nombre"].strip()
-        apellido = request.form["apellido"].strip()
-        matricula = request.form.get("matricula","").strip()
-        asistencia = request.form.get("asistencia")
-
-        if config.menu_activo and not asistencia:
-            error = "Seleccioná una opción del menú"
-        elif not solo_letras(nombre):
-            error = "Nombre inválido"
-        elif not solo_letras(apellido):
-            error = "Apellido inválido"
-        elif matricula and not solo_numeros(matricula):
-            error = "Matrícula inválida"
-        else:
-            nuevo = Participante(
-                nombre=nombre,
-                apellido=apellido,
-                matricula=matricula,
-                asistencia=asistencia if asistencia else ""
-            )
-            db.session.add(nuevo)
-            db.session.commit()
-
-            # 🔥 EMITE A TODOS LOS CLIENTES
-            socketio.emit("nuevo", {
-                "nombre": nuevo.nombre,
-                "apellido": nuevo.apellido
-            })
-
-            return redirect("/")
-
-    participantes = Participante.query.order_by(Participante.id.desc()).all()
     bg = "/static_bg" if os.path.exists("/var/data/uploads/fondo.jpg") else None
 
     return render_template("index.html",
         participantes=participantes,
         menu_opciones=menu_opciones,
         menu_activo=config.menu_activo,
-        error=error,
         admin=session.get("admin",False),
         bg_path=bg,
         config=config
     )
 
 # =========================
-# RESTO IGUAL (delete, reset, export, bg...)
+# RUN
 # =========================
-
-@app.route("/delete/<int:id>")
-def delete(id):
-    if not session.get("admin"):
-        return "No autorizado",403
-
-    p = Participante.query.get(id)
-    if p:
-        db.session.delete(p)
-        db.session.commit()
-    return redirect("/")
-
-@app.route("/reset")
-def reset():
-    if not session.get("admin"):
-        return "No autorizado",403
-
-    Participante.query.delete()
-    db.session.commit()
-    return redirect("/")
-
-@app.route("/export")
-def export():
-    if not session.get("admin"):
-        return "No autorizado",403
-
-    wb = Workbook()
-    ws = wb.active
-    ws.append(["Nombre","Apellido","Matrícula","Horario"])
-
-    for p in Participante.query.all():
-        ws.append([p.nombre,p.apellido,p.matricula,p.asistencia])
-
-    path="/var/data/participantes.xlsx"
-    wb.save(path)
-
-    return send_file(path, as_attachment=True)
-
-@app.route("/upload_bg", methods=["POST"])
-def upload_bg():
-    if not session.get("admin"):
-        return "No autorizado",403
-
-    file = request.files.get("imagen")
-    if file:
-        file.save("/var/data/uploads/fondo.jpg")
-    return redirect("/")
-
-@app.route("/static_bg")
-def bg():
-    return send_file("/var/data/uploads/fondo.jpg")
-
-# 🔥 IMPORTANTE
 if __name__ == "__main__":
     socketio.run(app, debug=True)
