@@ -147,7 +147,7 @@ button {
 
 <div class="right">
 
-<h3>👥 Jugadores ({{ participantes|length }})</h3>
+<h3>👥 Convocados ({{ participantes|length }})</h3>
 
 {% for p in participantes %}
 <div class="card">
@@ -167,7 +167,7 @@ button {
 <script>
 function compartir(){
     let url = window.location.href;
-    let texto = "🏌️ Sumate al Torneo Matungo!\nCopa Alejandro Tiscar Memorial\n\nAnotate acá:\n" + url;
+    let texto = "🏌️ Sumate al Torneo Matungo Golf Tour 2026 !\nCopa: Alejandro Tiscar Memorial\n\nAnotate acá:\n" + url;
     let link = "https://wa.me/?text=" + encodeURIComponent(texto);
     window.open(link, "_blank");
 }
